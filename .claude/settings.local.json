@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm init -y)",
+      "Bash(npm pkg set:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
