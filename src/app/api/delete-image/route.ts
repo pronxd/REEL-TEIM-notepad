@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const BUNNY_STORAGE_KEY = process.env.BUNNY_STORAGE_KEY!;
-const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE!;
-const BUNNY_STORAGE_REGION = process.env.BUNNY_STORAGE_REGION || "";
-const BUNNY_CDN_HOST = process.env.BUNNY_CDN_HOST!;
-
-const BUNNY_STORAGE_HOST = BUNNY_STORAGE_REGION
-  ? `${BUNNY_STORAGE_REGION}.storage.bunnycdn.com`
-  : "storage.bunnycdn.com";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getBunnyHost() {
+  const region = process.env.BUNNY_STORAGE_REGION || "";
+  return region ? `${region}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+}
 
 export async function POST(req: NextRequest) {
+  const BUNNY_STORAGE_KEY = process.env.BUNNY_STORAGE_KEY!;
+  const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE!;
+  const BUNNY_CDN_HOST = process.env.BUNNY_CDN_HOST!;
+  const BUNNY_STORAGE_HOST = getBunnyHost();
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   try {
     const { id, url } = await req.json();
 
