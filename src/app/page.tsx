@@ -279,19 +279,19 @@ export default function Home() {
       </div>
 
       {/* Main content area */}
-      <div className="flex flex-1 min-h-0">
-        {/* Textarea - left side */}
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
+        {/* Textarea - top on mobile, left on desktop */}
         <textarea
           value={content}
           onChange={handleChange}
           onPaste={handlePaste}
-          className="flex-1 min-w-0 p-4 bg-black text-[#ededed] text-sm leading-relaxed resize-none outline-none placeholder-[#555] font-mono"
+          className="flex-1 min-w-0 min-h-0 p-4 bg-black text-[#ededed] text-base md:text-sm leading-relaxed resize-none outline-none placeholder-[#555] font-mono"
           placeholder="Start typing or paste something here... It will sync across all your devices."
           spellCheck={false}
         />
 
-        {/* Image panel - right side */}
-        <div className="w-80 border-l border-[#222] flex flex-col min-h-0">
+        {/* Image panel - bottom on mobile, right on desktop */}
+        <div className="w-full md:w-80 h-[40vh] md:h-auto shrink-0 border-t md:border-t-0 md:border-l border-[#222] flex flex-col min-h-0">
           {/* Panel header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-[#222]">
             <span className="text-xs font-medium text-[#888]">
