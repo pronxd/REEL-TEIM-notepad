@@ -27,6 +27,7 @@ export default function Home() {
   // Image state
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -180,15 +181,28 @@ export default function Home() {
   const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
     setUploading(true);
+    setUploadError(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) {
         console.error("Upload failed:", await res.text());
+        setUploadError("Upload failed");
+        return;
+      }
+      // Add the image straight from the response instead of waiting for the
+      // realtime echo (which can drop events, especially on rapid uploads).
+      // The realtime INSERT handler dedupes by id, so this won't double up.
+      const { image } = await res.json();
+      if (image) {
+        setImages((prev) =>
+          prev.some((i) => i.id === image.id) ? prev : [image, ...prev]
+        );
       }
     } catch (err) {
       console.error("Upload error:", err);
+      setUploadError("Upload failed");
     } finally {
       setUploading(false);
     }
@@ -258,6 +272,7 @@ export default function Home() {
         <h1 className="text-sm font-medium text-[#888]">Realtime Notepad</h1>
         <div className="flex items-center gap-3">
           {uploading && <span className="text-xs text-[#555]">Uploading...</span>}
+          {uploadError && <span className="text-xs text-red-500">{uploadError}</span>}
           <span
             className={`text-xs ${
               status === "saved"
