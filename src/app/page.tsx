@@ -13,6 +13,65 @@ interface ImageRecord {
   created_at: string;
 }
 
+// Vercel serverless functions reject request bodies larger than ~4.5MB
+// (FUNCTION_PAYLOAD_TOO_LARGE), and uploads are proxied through /api/upload.
+// So before sending, re-encode oversized images in the browser — sharp can't
+// help here because the file would have to reach the server first, which is
+// exactly the request the 4.5MB limit blocks. We step BOTH the resolution and
+// the JPEG quality down until the result is comfortably under the cap, so a
+// screenshot always fits (it fits on the first pass; the rest is insurance).
+const MAX_UPLOAD_BYTES = 4.4 * 1024 * 1024; // trigger + hard ceiling (under 4.5MB)
+const COMPRESS_TARGET = 4.0 * 1024 * 1024; // aim well under the ceiling for margin
+
+async function compressImage(file: File): Promise<File> {
+  // Only raster images can be re-encoded on a canvas; leave video/GIF untouched.
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+  if (file.size <= MAX_UPLOAD_BYTES) return file; // already fits — keep it pristine
+
+  const bitmap = await createImageBitmap(file);
+  const jpgName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+
+  // (longest-edge cap, JPEG quality) attempts, best-looking first. We return the
+  // first one under target; a screenshot clears the first attempt easily, and
+  // even the smallest attempt is a couple hundred KB, so this can't fail to fit.
+  const attempts: [number, number][] = [
+    [2400, 0.85],
+    [2000, 0.82],
+    [1600, 0.8],
+    [1280, 0.75],
+    [1024, 0.7],
+    [800, 0.65],
+    [640, 0.6],
+  ];
+
+  let best: File | null = null;
+  for (const [maxDim, quality] of attempts) {
+    const longest = Math.max(bitmap.width, bitmap.height);
+    const scale = Math.min(1, maxDim / longest);
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) break;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", quality)
+    );
+    if (!blob) continue;
+
+    const candidate = new File([blob], jpgName, { type: "image/jpeg" });
+    if (!best || candidate.size < best.size) best = candidate;
+    if (candidate.size <= COMPRESS_TARGET) break; // comfortably under — stop here
+  }
+
+  bitmap.close();
+  return best ?? file;
+}
+
 export default function Home() {
   const [authed, setAuthed] = useState(false);
   const [pwInput, setPwInput] = useState("");
@@ -183,8 +242,21 @@ export default function Home() {
     setUploading(true);
     setUploadError(null);
     try {
+      let toUpload = file;
+      try {
+        toUpload = await compressImage(file);
+      } catch (err) {
+        console.error("Compression failed, uploading original:", err);
+      }
+
+      if (toUpload.size > MAX_UPLOAD_BYTES) {
+        // Can't squeeze it under Vercel's body limit (e.g. a large video).
+        setUploadError("File too large (max ~4.5 MB)");
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", toUpload);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) {
         console.error("Upload failed:", await res.text());
