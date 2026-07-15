@@ -23,6 +23,46 @@ interface ImageRecord {
 const MAX_UPLOAD_BYTES = 4.4 * 1024 * 1024; // trigger + hard ceiling (under 4.5MB)
 const COMPRESS_TARGET = 4.0 * 1024 * 1024; // aim well under the ceiling for margin
 
+// Turn bare URLs in the note into clickable anchors. The textarea itself
+// can't render links, so this feeds an overlay that mirrors the text exactly.
+const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+
+function renderWithLinks(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  URL_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    let url = match[0];
+    // Trim punctuation that ends the sentence rather than the URL, but keep a
+    // closing ")" when the URL itself contains the matching "(".
+    while (/[.,;:!?'")\]]$/.test(url)) {
+      if (
+        url.endsWith(")") &&
+        (url.match(/\(/g) || []).length >= (url.match(/\)/g) || []).length
+      )
+        break;
+      url = url.slice(0, -1);
+    }
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+    const href = /^www\./i.test(url) ? `https://${url}` : url;
+    nodes.push(
+      <a
+        key={`${match.index}-${url}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[#6cb2ff] underline underline-offset-2 pointer-events-auto hover:text-[#9ccaff]"
+      >
+        {url}
+      </a>
+    );
+    last = match.index + url.length;
+  }
+  nodes.push(text.slice(last));
+  return nodes;
+}
+
 async function compressImage(file: File): Promise<File> {
   // Only raster images can be re-encoded on a canvas; leave video/GIF untouched.
   if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
@@ -82,6 +122,16 @@ export default function Home() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRemoteUpdate = useRef(false);
   const latestContent = useRef("");
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Keep the link overlay aligned with the textarea as it scrolls.
+  const syncScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    const overlay = overlayRef.current;
+    if (overlay) {
+      overlay.scrollTop = e.currentTarget.scrollTop;
+      overlay.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
 
   // Image state
   const [images, setImages] = useState<ImageRecord[]>([]);
@@ -367,15 +417,31 @@ export default function Home() {
 
       {/* Main content area */}
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        {/* Textarea - top on mobile, left on desktop */}
-        <textarea
-          value={content}
-          onChange={handleChange}
-          onPaste={handlePaste}
-          className="flex-1 min-w-0 min-h-0 p-4 bg-black text-[#ededed] text-base md:text-sm leading-relaxed resize-none outline-none placeholder-[#555] font-mono"
-          placeholder="Start typing or paste something here... It will sync across all your devices."
-          spellCheck={false}
-        />
+        {/* Editor - top on mobile, left on desktop. The textarea's text is
+            transparent (caret kept visible); the overlay renders the same text
+            on top with URLs as real, tappable links. The overlay ignores
+            pointer events except on the links themselves, so typing and
+            selecting still hit the textarea underneath. */}
+        <div className="relative flex-1 min-w-0 min-h-0">
+          <textarea
+            value={content}
+            onChange={handleChange}
+            onPaste={handlePaste}
+            onScroll={syncScroll}
+            className="absolute inset-0 w-full h-full p-4 bg-black text-transparent caret-[#ededed] text-base md:text-sm leading-relaxed resize-none outline-none placeholder-[#555] font-mono"
+            placeholder="Start typing or paste something here... It will sync across all your devices."
+            spellCheck={false}
+          />
+          <div
+            ref={overlayRef}
+            aria-hidden="true"
+            className="absolute inset-0 p-4 text-[#ededed] text-base md:text-sm leading-relaxed font-mono whitespace-pre-wrap break-words overflow-hidden pointer-events-none"
+          >
+            {/* A trailing space keeps a final empty line from collapsing so
+                the overlay's scroll height matches the textarea's. */}
+            {renderWithLinks(content.endsWith("\n") ? content + " " : content)}
+          </div>
+        </div>
 
         {/* Image panel - bottom on mobile, right on desktop */}
         <div className="w-full md:w-80 h-[40vh] md:h-auto shrink-0 border-t md:border-t-0 md:border-l border-[#222] flex flex-col min-h-0">
