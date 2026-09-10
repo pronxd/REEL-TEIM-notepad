@@ -5,20 +5,26 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "format": "prettier --write src tests playwright.config.ts README.md package.json"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "fflate": "^0.8.3",
     "next": "latest",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@supabase/supabase-js": "^2.49.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/react": "^19.0.0",
-    "@types/node": "^22.0.0",
-    "tailwindcss": "^4.0.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.0.0",
-    "postcss": "^8.5.0"
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "postcss": "^8.5.0",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
   }
 }
