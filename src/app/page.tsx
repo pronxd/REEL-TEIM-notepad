@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 import { MediaGallery } from "@/components/media-gallery";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useNotes } from "@/hooks/use-notes";
 import { displayDate, extractLinks, noteExcerpt, noteTitle } from "@/lib/notes";
 import { saveBlob } from "@/lib/media";
@@ -164,6 +165,7 @@ export default function Home() {
   if (!authed)
     return (
       <main className="login-page">
+        <ThemeToggle className="login-theme-toggle" />
         <div className="login-decoration" aria-hidden="true">
           <span />
           <span />
@@ -284,6 +286,7 @@ export default function Home() {
           <span className="status-dot" />
           <span>{notebook.connected ? "Live sync" : "Reconnecting"}</span>
         </div>
+        <ThemeToggle />
         <div className="avatar" title="My workspace">
           J
         </div>

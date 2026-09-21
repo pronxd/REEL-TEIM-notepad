@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --paper: #fff;
   --canvas: #f7f8f5;
   --sidebar: #f0f2ed;
@@ -12,6 +13,20 @@
   --orange: #d58c50;
   --danger: #b44b43;
   --shadow: 0 4px 24px #293b3204;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1c231e;
+  --canvas: #121613;
+  --sidebar: #171d18;
+  --ink: #e1e8de;
+  --muted: #a2af9e;
+  --line: #303a31;
+  --green: #9dc9a6;
+  --green-light: #2a382c;
+  --orange: #dfa16c;
+  --danger: #eea398;
+  --shadow: 0 4px 24px #00000020;
 }
 * {
   box-sizing: border-box;
