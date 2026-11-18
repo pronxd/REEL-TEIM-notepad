@@ -112,11 +112,21 @@ test("notebook layout, tabs, search, and a new note persist separately", async (
     "scrollWidth",
     await page.locator("body").evaluate((body) => body.clientWidth),
   );
-  await page.getByRole("tab", { name: "Weekend wanderings" }).click();
+  // Wide screens pick notes from the sidebar; phones use the tab strip.
+  const desktop = info.project.name === "desktop";
+  const openNote = (name: string) =>
+    desktop
+      ? page.locator(".note-list-item").filter({ hasText: name }).click()
+      : page.getByRole("tab", { name }).click();
+  await openNote("Weekend wanderings");
   await expect(page.getByRole("textbox", { name: "Note text" })).toHaveValue(
     /A coffee, a camera/,
   );
-  await page.getByRole("button", { name: "Create a new note tab" }).click();
+  await page
+    .getByRole("button", {
+      name: desktop ? "New note" : "Create a new note tab",
+    })
+    .click();
   await page
     .getByRole("textbox", { name: "Note text" })
     .fill("A fresh start\nMy new note.");
@@ -127,12 +137,12 @@ test("notebook layout, tabs, search, and a new note persist separately", async (
       ),
     )
     .toBe(true);
-  await page.getByRole("tab", { name: "Little things, big ideas" }).click();
+  await openNote("Little things, big ideas");
   await expect(page.getByRole("textbox", { name: "Note text" })).toHaveValue(
     mainText,
   );
   await page.reload();
-  await page.getByRole("tab", { name: "A fresh start" }).click();
+  await openNote("A fresh start");
   await expect(page.getByRole("textbox", { name: "Note text" })).toHaveValue(
     "A fresh start\nMy new note.",
   );

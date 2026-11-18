@@ -16,14 +16,14 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --paper: #1c231e;
-  --canvas: #121613;
-  --sidebar: #171d18;
-  --ink: #e1e8de;
-  --muted: #a2af9e;
-  --line: #303a31;
-  --green: #9dc9a6;
-  --green-light: #2a382c;
+  --paper: #262626;
+  --canvas: #1e1e1e;
+  --sidebar: #212121;
+  --ink: #e4e4e4;
+  --muted: #a3a3a3;
+  --line: #383838;
+  --green: #d0d0d0;
+  --green-light: #333333;
   --orange: #dfa16c;
   --danger: #eea398;
   --shadow: 0 4px 24px #00000020;
@@ -2188,5 +2188,20 @@ button {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+/* The note itself is the page: no hero, no title row. */
+.note-editor,
+.note-reader {
+  padding-top: 22px;
+}
+/* Wide screens navigate from the sidebar; the tab strip is the phone fallback. */
+@media (min-width: 901px) {
+  .note-tabs {
+    display: none;
+  }
+  .notes-view {
+    padding-top: 20px;
+    padding-bottom: 14px;
   }
 }

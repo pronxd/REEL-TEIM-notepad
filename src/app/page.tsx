@@ -398,23 +398,6 @@ export default function Home() {
             hidden={view !== "notes"}
             aria-label="Notes workspace"
           >
-            <header className="view-heading">
-              <div>
-                <div className="eyebrow">WRITE IT DOWN. MAKE IT HAPPEN.</div>
-                <h1>
-                  My notebook<span className="heading-dot">.</span>
-                </h1>
-                <p>A thought, a plan, a spark. It all belongs here.</p>
-              </div>
-              <button
-                className="button secondary"
-                onClick={newNote}
-                disabled={notebook.loading}
-              >
-                <Icon name="plus" size={17} />
-                New note
-              </button>
-            </header>
             <label className="search-field mobile-note-search">
               <Icon name="search" size={16} />
               <input
@@ -607,10 +590,6 @@ export default function Home() {
                       </button>
                     </div>
                   )}
-                  <div className="editor-title-row">
-                    <h2>{noteTitle(content)}</h2>
-                    <span className="note-category">NOTE</span>
-                  </div>
                   <div className="writing-area">
                     {mode === "edit" ? (
                       <textarea
@@ -632,7 +611,7 @@ export default function Home() {
                         onScroll={rememberPosition}
                         onSelect={rememberPosition}
                         placeholder={
-                          "Give your note a title on the first line.\n\nThen let your thoughts take it from here…"
+                          "Start typing or paste anything here…"
                         }
                         spellCheck
                         autoCapitalize="sentences"
